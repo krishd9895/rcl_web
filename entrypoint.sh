@@ -9,10 +9,11 @@ else
     echo "No RCLONE_CONFIG_URL provided."
 fi
 
-# Check if config file exists
+# Create empty config if none exists
 if [ ! -f /config/rclone/rclone.conf ]; then
-    echo "Error: rclone config file not found at /config/rclone/rclone.conf"
-    exit 1
+    echo "No rclone config found. Creating empty config file..."
+    mkdir -p /config/rclone
+    touch /config/rclone/rclone.conf
 fi
 
 # Set RCLONE_CONFIG environment variable
