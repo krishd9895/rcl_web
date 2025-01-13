@@ -1,11 +1,15 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, status
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import subprocess
 import os
 import json
+import requests
+import secrets
 
 app = FastAPI()
+security = HTTPBasic()
 
 # Enable CORS
 app.add_middleware(
@@ -16,6 +20,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Get credentials from environment variables
+AUTH_USERNAME = os.getenv("AUTH_USERNAME")
+AUTH_PASSWORD = os.getenv("AUTH_PASSWORD")
+
+def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
+    if not AUTH_USERNAME or not AUTH_PASSWORD:
+        return  # No authentication if credentials aren't set
+        
+    correct_username = secrets.compare_digest(credentials.username, AUTH_USERNAME)
+    correct_password = secrets.compare_digest(credentials.password, AUTH_PASSWORD)
+    
+    if not (correct_username and correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return credentials
+
+# Modified HTML template with login status
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html>
@@ -30,15 +54,36 @@ HTML_TEMPLATE = """
         .file { color: #34495e; }
         .download-link { color: #3498db; text-decoration: none; }
         .breadcrumb { margin-bottom: 20px; }
+        .login-status { 
+            position: fixed; 
+            top: 10px; 
+            right: 10px; 
+            padding: 5px 10px; 
+            background: #eee; 
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
+    <div class="login-status" id="loginStatus"></div>
     <div class="breadcrumb" id="breadcrumb"></div>
     <div id="content"></div>
 
     <script>
+        // Check login status on page load
+        fetch('/api/auth-status')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loginStatus').textContent = 
+                    data.auth_required ? `Logged in as: ${data.username}` : 'No authentication required';
+            });
+
         async function loadPath(remote, path = "") {
             const response = await fetch(`/api/list/${remote}/${path}`);
+            if (response.status === 401) {
+                window.location.reload();  // Trigger browser's auth prompt
+                return;
+            }
             const data = await response.json();
             
             const content = document.getElementById("content");
@@ -85,35 +130,55 @@ HTML_TEMPLATE = """
 
         // Load remotes on page load
         fetch("/api/remotes")
-            .then(response => response.json())
+            .then(response => {
+                if (response.status === 401) {
+                    window.location.reload();  // Trigger browser's auth prompt
+                    return;
+                }
+                return response.json();
+            })
             .then(remotes => {
-                const content = document.getElementById("content");
-                let html = "<div class='items'>";
-                remotes.forEach(remote => {
-                    html += `
-                        <div class="item folder">
-                            🗄️ <a href="#" onclick="loadPath('${remote}')">${remote}</a>
-                        </div>`;
-                });
-                html += "</div>";
-                content.innerHTML = html;
+                if (remotes) {
+                    const content = document.getElementById("content");
+                    let html = "<div class='items'>";
+                    remotes.forEach(remote => {
+                        html += `
+                            <div class="item folder">
+                                🗄️ <a href="#" onclick="loadPath('${remote}')">${remote}</a>
+                            </div>`;
+                    });
+                    html += "</div>";
+                    content.innerHTML = html;
+                }
             });
     </script>
 </body>
 </html>
 """
 
+# Add authentication to all routes
 @app.get("/", response_class=HTMLResponse)
-async def root():
+async def root(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
     return HTML_TEMPLATE
 
+@app.get("/api/auth-status")
+async def auth_status(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
+    return {
+        "auth_required": bool(AUTH_USERNAME and AUTH_PASSWORD),
+        "username": credentials.username if (AUTH_USERNAME and AUTH_PASSWORD) else None
+    }
+
 @app.get("/api/remotes")
-async def list_remotes():
+async def list_remotes(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
     output = subprocess.check_output(["rclone", "listremotes"], text=True)
     return [remote.strip(":") for remote in output.split()]
 
 @app.get("/api/list/{remote}/{path:path}")
-async def list_directory(remote: str, path: str = ""):
+async def list_directory(
+    remote: str, 
+    path: str = "", 
+    credentials: HTTPBasicCredentials = Depends(verify_credentials)
+):
     command = ["rclone", "lsjson", f"{remote}:{path}"]
     output = subprocess.check_output(command, text=True)
     
@@ -135,15 +200,18 @@ async def list_directory(remote: str, path: str = ""):
     return {"folders": sorted(folders), "files": sorted(files, key=lambda x: x["name"])}
 
 @app.get("/download/{remote}/{path:path}")
-async def download_file(remote: str, path: str, background_tasks: BackgroundTasks):
+async def download_file(
+    remote: str, 
+    path: str, 
+    background_tasks: BackgroundTasks,
+    credentials: HTTPBasicCredentials = Depends(verify_credentials)
+):
     try:
-        # Create a unique temporary directory for this download
         temp_dir = f"/tmp/rclone_download_{os.urandom(8).hex()}"
         os.makedirs(temp_dir, exist_ok=True)
         
         local_path = os.path.join(temp_dir, os.path.basename(path))
         
-        # Use rclone copy command with proper error handling
         process = subprocess.run(
             ["rclone", "copy", f"{remote}:{path}", temp_dir],
             check=True,
@@ -154,7 +222,6 @@ async def download_file(remote: str, path: str, background_tasks: BackgroundTask
         if not os.path.exists(local_path):
             raise HTTPException(status_code=404, detail="File not found or failed to download")
         
-        # Return the file with proper cleanup
         return FileResponse(
             local_path,
             filename=os.path.basename(path),
@@ -162,7 +229,6 @@ async def download_file(remote: str, path: str, background_tasks: BackgroundTask
         )
     
     except subprocess.CalledProcessError as e:
-        # Clean up any temporary files that might have been created
         if 'temp_dir' in locals():
             cleanup_temp_files(temp_dir)
         raise HTTPException(
@@ -170,7 +236,6 @@ async def download_file(remote: str, path: str, background_tasks: BackgroundTask
             detail=f"Failed to download file: {e.stderr}"
         )
     except Exception as e:
-        # Clean up any temporary files that might have been created
         if 'temp_dir' in locals():
             cleanup_temp_files(temp_dir)
         raise HTTPException(
@@ -178,7 +243,6 @@ async def download_file(remote: str, path: str, background_tasks: BackgroundTask
             detail=f"An error occurred while downloading the file: {str(e)}"
         )
 
-# Helper function to clean up temporary files
 def cleanup_temp_files(temp_dir: str):
     try:
         if os.path.exists(temp_dir):
