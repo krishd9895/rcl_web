@@ -13,7 +13,7 @@ RUN apk add --no-cache \
     libffi-dev
 
 # Install Python packages
-RUN pip install fastapi uvicorn aiofiles requests python-multipart
+RUN pip install fastapi uvicorn aiofiles requests python-multipart python-jose[cryptography] passlib[bcrypt]
 
 # Create app directory and config
 WORKDIR /app
@@ -26,6 +26,8 @@ RUN chmod +x /app/entrypoint.sh
 
 # Environment variables
 ENV RCLONE_CONFIG_URL=""
+ENV AUTH_USERNAME=""
+ENV AUTH_PASSWORD=""
 ENV TZ="UTC"
 
 # Expose port
