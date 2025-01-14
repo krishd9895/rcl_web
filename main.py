@@ -252,100 +252,97 @@ HTML_TEMPLATE = """
         document.getElementById('modalOverlay').style.display = 'none';
       }
       // Load remotes function
-      async function loadRemotes() {
-        try {
-          const response = await fetch("/api/remotes");
-          if (response.status === 401) {
-            window.location.reload(); // Trigger browser's auth prompt
-            return;
-          }
-          const remotes = await response.json();
-          const content = document.getElementById("content");
-          let html = " < div class = 'items' > ";
-          remotes.forEach(remote => {
-            html += `
-                        
-						<div class="item folder">
-                            🗄️ 
-							<a href="#" onclick="loadPath('${remote}')">${remote}</a>
-						</div>`;
-          });
-          html += " < /div>";
-          content.innerHTML = html;
-          document.getElementById('breadcrumb').innerHTML = 'Home';
-        } catch (error) {
-          showMessage('Error loading remotes: ' + error.message, true);
-        }
-      }
-      // Load path function
-      async function loadPath(remote, path = "") {
-        try {
-          const response = await fetch(`/api/list/${remote}/${path}`);
-          if (response.status === 401) {
-            window.location.reload(); // Trigger browser's auth prompt
-            return;
-          }
-          const data = await response.json();
-          const content = document.getElementById("content");
-          const breadcrumb = document.getElementById("breadcrumb");
-          // Update breadcrumb
-          const parts = path.split("/").filter(p => p);
-          let breadcrumbHtml = `
-					<a href="#" onclick="loadRemotes()">Home</a> / 
-					<a href="#" onclick="loadPath('${remote}')">/${remote}</a>`;
-          let currentPath = "";
-          parts.forEach(part => {
-            currentPath += "/" + part;
-            breadcrumbHtml += ` / 
-					<a href="#" onclick="loadPath('${remote}', '${currentPath.slice(1)}')">${part}</a>`;
-          });
-          breadcrumb.innerHTML = breadcrumbHtml;
-          // Update content
-          let html = " < div class = 'items' > ";
-          // Folders
-          data.folders.forEach(folder => {
-            const folderPath = path ? `${path}/${folder}` : folder;
-            html += `
-                        
-						<div class="item folder">
-                            📁 
-							<a href="#" onclick="loadPath('${remote}', '${folderPath}')">${folder}</a>
-						</div>`;
-          });
-          // File icons mapping
-          const fileIcons = {
-            'pdf': '📄', // PDF icon
-            'doc': '📝', // Document icon
-            'xls': '📊', // Spreadsheet icon
-            'jpg': '🖼️', // Image icon
-            'png': '🖼️', // Image icon
-            'zip': '🗜️', // Zip file icon
-            'mp3': '🎵', // Audio icon for MP3
-            'm4u': '🎵', // Audio icon for M4U
-            'mp4': '🎥', // Video icon for MP4
-            'avi': '🎥', // Video icon for AVI
-            'mov': '🎥', // Video icon for MOV
-            // Add more extensions as needed
-          };
-          // Files with icons based on extension
-          data.files.forEach(file => {
-            const filePath = path ? `${path}/${file.name}` : file.name;
-            const extension = file.name.split('.').pop().toLowerCase(); // Get file extension
-            const icon = fileIcons[extension] || '📄'; // Default icon for unknown extensions
-            html += `
-                        
-						<div class="item file">
-                            ${icon} ${file.name} (${formatSize(file.size)})
-                            
-							<a class="download-link" href="/download/${remote}/${filePath}" target="_blank">⬇️ Download</a>
-						</div>`;
-          });
-          html += " < /div>";
-          content.innerHTML = html;
-        } catch (error) {
-          showMessage('Error loading path: ' + error.message, true);
-        }
-      }
+async function loadRemotes() {
+    try {
+	const response = await fetch("/api/remotes");
+	if (response.status === 401) {
+	    window.location.reload(); // Trigger browser's auth prompt
+	    return;
+	}
+	const remotes = await response.json();
+	const content = document.getElementById("content");
+	let html = "<div class='items'>";
+	remotes.forEach(remote => {
+	    html += `
+		<div class="item folder">
+		    🗄️ 
+		    <a href="#" onclick="loadPath('${remote}')">${remote}</a>
+		</div>`;
+	});
+	html += "</div>";
+	content.innerHTML = html;
+	document.getElementById('breadcrumb').innerHTML = 'Home';
+    } catch (error) {
+	showMessage('Error loading remotes: ' + error.message, true);
+    }
+}
+
+// Load path function
+async function loadPath(remote, path = "") {
+    try {
+	const response = await fetch(`/api/list/${remote}/${path}`);
+	if (response.status === 401) {
+	    window.location.reload(); // Trigger browser's auth prompt
+	    return;
+	}
+	const data = await response.json();
+	const content = document.getElementById("content");
+	const breadcrumb = document.getElementById("breadcrumb");
+	// Update breadcrumb
+	const parts = path.split("/").filter(p => p);
+	let breadcrumbHtml = `
+	    <a href="#" onclick="loadRemotes()">Home</a> / 
+	    <a href="#" onclick="loadPath('${remote}')">/${remote}</a>`;
+	let currentPath = "";
+	parts.forEach(part => {
+	    currentPath += "/" + part;
+	    breadcrumbHtml += ` / 
+		<a href="#" onclick="loadPath('${remote}', '${currentPath.slice(1)}')">${part}</a>`;
+	});
+	breadcrumb.innerHTML = breadcrumbHtml;
+	// Update content
+	let html = "<div class='items'>";
+	// Folders
+	data.folders.forEach(folder => {
+	    const folderPath = path ? `${path}/${folder}` : folder;
+	    html += `
+		<div class="item folder">
+		    📁 
+		    <a href="#" onclick="loadPath('${remote}', '${folderPath}')">${folder}</a>
+		</div>`;
+	});
+	// File icons mapping
+	const fileIcons = {
+	    'pdf': '📄', // PDF icon
+	    'doc': '📝', // Document icon
+	    'xls': '📊', // Spreadsheet icon
+	    'jpg': '🖼️', // Image icon
+	    'png': '🖼️', // Image icon
+	    'zip': '🗜️', // Zip file icon
+	    'mp3': '🎵', // Audio icon for MP3
+	    'm4u': '🎵', // Audio icon for M4U
+	    'mp4': '🎥', // Video icon for MP4
+	    'avi': '🎥', // Video icon for AVI
+	    'mov': '🎥', // Video icon for MOV
+	    // Add more extensions as needed
+	};
+	// Files with icons based on extension
+	data.files.forEach(file => {
+	    const filePath = path ? `${path}/${file.name}` : file.name;
+	    const extension = file.name.split('.').pop().toLowerCase(); // Get file extension
+	    const icon = fileIcons[extension] || '📄'; // Default icon for unknown extensions
+	    html += `
+		<div class="item file">
+		    ${icon} ${file.name} (${formatSize(file.size)})
+		    <a class="download-link" href="/download/${remote}/${filePath}" target="_blank">⬇️ Download</a>
+		</div>`;
+	});
+	html += "</div>";
+	content.innerHTML = html;
+    } catch (error) {
+	showMessage('Error loading path: ' + error.message, true);
+    }
+}
 
       function formatSize(bytes) {
         const sizes = ["B", "KB", "MB", "GB", "TB"];
