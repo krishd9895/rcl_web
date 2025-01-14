@@ -19,6 +19,18 @@ fi
 # Set RCLONE_CONFIG environment variable
 export RCLONE_CONFIG="/config/rclone/rclone.conf"
 
+# Set Rclone optimization flags
+export RCLONE_VFS_CACHE_MODE="full"
+export RCLONE_ATTR_TIMEOUT="30s"
+export RCLONE_MULTI_THREAD_STREAMS=8
+export RCLONE_DRIVE_CHUNK_SIZE="64M"
+export RCLONE_TRANSFERS=8
+export RCLONE_BUFFER_SIZE="64M"
+export RCLONE_FAST_LIST=true
+export RCLONE_DIR_CACHE_TIME="24h"
+export RCLONE_VFS_READ_AHEAD="128M"
+export RCLONE_VFS_CACHE_MAX_AGE="24h"
+
 # Start FastAPI server
 echo "Starting FastAPI server..."
 exec uvicorn main:app --host 0.0.0.0 --port 5572 --reload
