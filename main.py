@@ -44,365 +44,375 @@ def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Rclone Browser</title>
     <style>
-        :root {
-            --bg-color: #ffffff;
-            --text-color: #333333;
-            --item-hover: #f5f5f5;
-            --border-color: #eee;
-            --button-bg: #3498db;
-            --button-hover: #2980b9;
-            --header-bg: #f8f9fa;
-            --modal-bg: #ffffff;
-            --modal-shadow: rgba(0, 0, 0, 0.1);
-            --folder-color: #e67e22;
-            --file-color: #16a085;
-        }
+      :root {
+        --bg-color: #ffffff;
+        --text-color: #333333;
+        --item-hover: #f5f5f5;
+        --border-color: #eee;
+        --button-bg: #3498db;
+        --button-hover: #2980b9;
+        --header-bg: #f8f9fa;
+        --modal-bg: #ffffff;
+        --modal-shadow: rgba(0, 0, 0, 0.1);
+        --folder-color: #e67e22;
+        --file-color: #16a085;
+      }
 
-        [data-theme="dark"] {
-            --bg-color: #1a1a1a;
-            --text-color: #e0e0e0;
-            --item-hover: #2d2d2d;
-            --border-color: #333;
-            --button-bg: #2980b9;
-            --button-hover: #3498db;
-            --header-bg: #2d2d2d;
-            --modal-bg: #2d2d2d;
-            --modal-shadow: rgba(255, 255, 255, 0.1);
-            --folder-color: #f39c12;
-            --file-color: #1abc9c;
-        }
+      [data-theme="dark"] {
+        --bg-color: #1a1a1a;
+        --text-color: #e0e0e0;
+        --item-hover: #2d2d2d;
+        --border-color: #333;
+        --button-bg: #2980b9;
+        --button-hover: #3498db;
+        --header-bg: #2d2d2d;
+        --modal-bg: #2d2d2d;
+        --modal-shadow: rgba(255, 255, 255, 0.1);
+        --folder-color: #ffffff;
+        --file-color: #dcdcdc;
+      }
 
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            transition: background-color 0.3s, color 0.3s;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        transition: background-color 0.3s, color 0.3s;
+      }
 
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 10px 20px;
-            background: var(--header-bg);
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            z-index: 1000;
-            border-bottom: 1px solid var(--border-color);
-        }
+      .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 10px 20px;
+        background: var(--header-bg);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        z-index: 1000;
+        border-bottom: 1px solid var(--border-color);
+      }
 
-        .content-wrapper {
-            margin-top: 60px;
-        }
+      .content-wrapper {
+        margin-top: 60px;
+      }
 
-        .modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--modal-bg);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px var(--modal-shadow);
-            z-index: 1001;
-            max-width: 500px;
-            width: 90%;
-        }
+      .modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--modal-bg);
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px var(--modal-shadow);
+        z-index: 1001;
+        max-width: 500px;
+        width: 90%;
+      }
 
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-        }
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+      }
 
-        .button {
-            background: var(--button-bg);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
+      .button {
+        background: var(--button-bg);
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
 
-        .button:hover {
-            background: var(--button-hover);
-        }
+      .button:hover {
+        background: var(--button-hover);
+      }
 
-        .item {
-            padding: 10px;
-            border-bottom: 1px solid var(--border-color);
-            transition: background-color 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+      .item {
+        padding: 10px;
+        border-bottom: 1px solid var(--border-color);
+        transition: background-color 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-        .item:hover {
-            background-color: var(--item-hover);
-        }
+      .item:hover {
+        background-color: var(--item-hover);
+      }
 
-        .folder {
-            color: var(--folder-color);
-            font-weight: bold;
-        }
+      .folder {
+        color: var(--folder-color);
+        font-weight: bold;
+      }
 
-        .file {
-            color: var(--file-color);
-        }
+      .file {
+        color: var(--file-color);
+      }
 
-        .download-link {
-            color: var(--button-bg);
-            text-decoration: none;
-        }
+      .download-link {
+        color: var(--button-bg);
+        text-decoration: none;
+      }
 
-        .breadcrumb {
-            margin-bottom: 20px;
-            color: var(--text-color);
-        }
+      .breadcrumb {
+        margin-bottom: 20px;
+        color: var(--text-color);
+      }
 
-        .breadcrumb a {
-            color: var(--button-bg);
-            text-decoration: none;
-        }
+      .breadcrumb a {
+        color: var(--button-bg);
+        text-decoration: none;
+      }
 
-        .config-upload {
-            text-align: center;
-            margin: 50px auto;
-            max-width: 500px;
-        }
+      .config-upload {
+        text-align: center;
+        margin: 50px auto;
+        max-width: 500px;
+      }
 
-        #configMessage {
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 4px;
-        }
+      #configMessage {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 4px;
+      }
 
-        .error-message {
-            background: #ff595e;
-            color: white;
-        }
+      .error-message {
+        background: #ff595e;
+        color: white;
+      }
 
-        .success-message {
-            background: #8ac926;
-            color: white;
-        }
+      .success-message {
+        background: #8ac926;
+        color: white;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="header">
-        <button id="settingsBtn" class="button" style="display: none;">⚙️ Settings</button>
-        <button id="themeToggle" class="button">🌓</button>
+      <button id="settingsBtn" class="button" style="display: none;">⚙️ Settings</button>
+      <button id="themeToggle" class="button">🌓</button>
     </div>
-
     <div class="content-wrapper">
-        <div id="uploadSection" class="config-upload" style="display: none;">
-            <h2>Upload Rclone Configuration</h2>
-            <form id="uploadForm" enctype="multipart/form-data" onsubmit="uploadConfig(event)">
-                <input type="file" id="configFile" accept=".conf" required>
-                <button type="submit" class="button">Upload Config</button>
-            </form>
-            <div id="configMessage"></div>
-        </div>
-
-        <div id="mainContent">
-            <div class="breadcrumb" id="breadcrumb"></div>
-            <div id="content"></div>
-        </div>
-    </div>
-
-    <div id="settingsModal" class="modal">
-        <h3>Update Configuration</h3>
-        <form id="updateConfigForm" enctype="multipart/form-data" onsubmit="uploadConfig(event)">
-            <input type="file" id="updateConfigFile" accept=".conf" required>
-            <button type="submit" class="button">Update Config</button>
+      <div id="uploadSection" class="config-upload" style="display: none;">
+        <h2>Upload Rclone Configuration</h2>
+        <form id="uploadForm" enctype="multipart/form-data" onsubmit="uploadConfig(event)">
+          <input type="file" id="configFile" accept=".conf" required>
+          <button type="submit" class="button">Upload Config</button>
         </form>
-        <div id="updateConfigMessage"></div>
-        <button class="button" onclick="closeSettingsModal()" style="margin-top: 10px;">Close</button>
+        <div id="configMessage"></div>
+      </div>
+      <div id="mainContent">
+        <div class="breadcrumb" id="breadcrumb"></div>
+        <div id="content"></div>
+      </div>
+    </div>
+    <div id="settingsModal" class="modal">
+      <h3>Update Configuration</h3>
+      <form id="updateConfigForm" enctype="multipart/form-data" onsubmit="uploadConfig(event)">
+        <input type="file" id="updateConfigFile" accept=".conf" required>
+        <button type="submit" class="button">Update Config</button>
+      </form>
+      <div id="updateConfigMessage"></div>
+      <button class="button" onclick="closeSettingsModal()" style="margin-top: 10px;">Close</button>
     </div>
     <div id="modalOverlay" class="modal-overlay" onclick="closeSettingsModal()"></div>
-
     <script>
-        // Theme management
-        const theme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', theme);
+      // Theme management
+      const theme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+      document.getElementById('themeToggle').addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+      });
+      // Settings modal
+      function showSettingsModal() {
+        document.getElementById('settingsModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+      }
 
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        });
-
-        // Settings modal
-        function showSettingsModal() {
-            document.getElementById('settingsModal').style.display = 'block';
-            document.getElementById('modalOverlay').style.display = 'block';
+      function closeSettingsModal() {
+        document.getElementById('settingsModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+      }
+      // Load remotes function
+      async function loadRemotes() {
+        try {
+          const response = await fetch("/api/remotes");
+          if (response.status === 401) {
+            window.location.reload(); // Trigger browser's auth prompt
+            return;
+          }
+          const remotes = await response.json();
+          const content = document.getElementById("content");
+          let html = " < div class = 'items' > ";
+          remotes.forEach(remote => {
+            html += `
+                        
+						<div class="item folder">
+                            🗄️ 
+							<a href="#" onclick="loadPath('${remote}')">${remote}</a>
+						</div>`;
+          });
+          html += " < /div>";
+          content.innerHTML = html;
+          document.getElementById('breadcrumb').innerHTML = 'Home';
+        } catch (error) {
+          showMessage('Error loading remotes: ' + error.message, true);
         }
-
-        function closeSettingsModal() {
-            document.getElementById('settingsModal').style.display = 'none';
-            document.getElementById('modalOverlay').style.display = 'none';
+      }
+      // Load path function
+      async function loadPath(remote, path = "") {
+        try {
+          const response = await fetch(`/api/list/${remote}/${path}`);
+          if (response.status === 401) {
+            window.location.reload(); // Trigger browser's auth prompt
+            return;
+          }
+          const data = await response.json();
+          const content = document.getElementById("content");
+          const breadcrumb = document.getElementById("breadcrumb");
+          // Update breadcrumb
+          const parts = path.split("/").filter(p => p);
+          let breadcrumbHtml = `
+					<a href="#" onclick="loadRemotes()">Home</a> / 
+					<a href="#" onclick="loadPath('${remote}')">/${remote}</a>`;
+          let currentPath = "";
+          parts.forEach(part => {
+            currentPath += "/" + part;
+            breadcrumbHtml += ` / 
+					<a href="#" onclick="loadPath('${remote}', '${currentPath.slice(1)}')">${part}</a>`;
+          });
+          breadcrumb.innerHTML = breadcrumbHtml;
+          // Update content
+          let html = " < div class = 'items' > ";
+          // Folders
+          data.folders.forEach(folder => {
+            const folderPath = path ? `${path}/${folder}` : folder;
+            html += `
+                        
+						<div class="item folder">
+                            📁 
+							<a href="#" onclick="loadPath('${remote}', '${folderPath}')">${folder}</a>
+						</div>`;
+          });
+          // File icons mapping
+          const fileIcons = {
+            'pdf': '📄', // PDF icon
+            'doc': '📝', // Document icon
+            'xls': '📊', // Spreadsheet icon
+            'jpg': '🖼️', // Image icon
+            'png': '🖼️', // Image icon
+            'zip': '🗜️', // Zip file icon
+            'mp3': '🎵', // Audio icon for MP3
+            'm4u': '🎵', // Audio icon for M4U
+            'mp4': '🎥', // Video icon for MP4
+            'avi': '🎥', // Video icon for AVI
+            'mov': '🎥', // Video icon for MOV
+            // Add more extensions as needed
+          };
+          // Files with icons based on extension
+          data.files.forEach(file => {
+            const filePath = path ? `${path}/${file.name}` : file.name;
+            const extension = file.name.split('.').pop().toLowerCase(); // Get file extension
+            const icon = fileIcons[extension] || '📄'; // Default icon for unknown extensions
+            html += `
+                        
+						<div class="item file">
+                            ${icon} ${file.name} (${formatSize(file.size)})
+                            
+							<a class="download-link" href="/download/${remote}/${filePath}" target="_blank">⬇️ Download</a>
+						</div>`;
+          });
+          html += " < /div>";
+          content.innerHTML = html;
+        } catch (error) {
+          showMessage('Error loading path: ' + error.message, true);
         }
+      }
 
-        // Load remotes function
-        async function loadRemotes() {
-            try {
-                const response = await fetch("/api/remotes");
-                if (response.status === 401) {
-                    window.location.reload();  // Trigger browser's auth prompt
-                    return;
-                }
-                const remotes = await response.json();
-                const content = document.getElementById("content");
-                let html = "<div class='items'>";
-                remotes.forEach(remote => {
-                    html += `
-                        <div class="item folder">
-                            🗄️ <a href="#" onclick="loadPath('${remote}')">${remote}</a>
-                        </div>`;
-                });
-                html += "</div>";
-                content.innerHTML = html;
-                document.getElementById('breadcrumb').innerHTML = 'Home';
-            } catch (error) {
-                showMessage('Error loading remotes: ' + error.message, true);
-            }
+      function formatSize(bytes) {
+        const sizes = ["B", "KB", "MB", "GB", "TB"];
+        if (bytes === 0) return "0 B";
+        const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+        return Math.round(bytes / Math.pow(1024, i), 2) + " " + sizes[i];
+      }
+      // Check if config exists and show appropriate UI
+      async function checkConfigExists() {
+        try {
+          const response = await fetch('/api/config/check');
+          const data = await response.json();
+          if (data.exists) {
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('settingsBtn').style.display = 'block';
+            loadRemotes(); // Load remotes when config exists
+          } else {
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('settingsBtn').style.display = 'none';
+          }
+        } catch (error) {
+          showMessage('Error checking configuration', true);
         }
-
-        // Load path function
-        async function loadPath(remote, path = "") {
-            try {
-                const response = await fetch(`/api/list/${remote}/${path}`);
-                if (response.status === 401) {
-                    window.location.reload();  // Trigger browser's auth prompt
-                    return;
-                }
-                const data = await response.json();
-                
-                const content = document.getElementById("content");
-                const breadcrumb = document.getElementById("breadcrumb");
-                
-                // Update breadcrumb
-                const parts = path.split("/").filter(p => p);
-                let breadcrumbHtml = `<a href="#" onclick="loadRemotes()">Home</a> / <a href="#" onclick="loadPath('${remote}')">/${remote}</a>`;
-                let currentPath = "";
-                parts.forEach(part => {
-                    currentPath += "/" + part;
-                    breadcrumbHtml += ` / <a href="#" onclick="loadPath('${remote}', '${currentPath.slice(1)}')">${part}</a>`;
-                });
-                breadcrumb.innerHTML = breadcrumbHtml;
-                
-                // Update content
-                let html = "<div class='items'>";
-                data.folders.forEach(folder => {
-                    const folderPath = path ? `${path}/${folder}` : folder;
-                    html += `
-                        <div class="item folder">
-                            📁 <a href="#" onclick="loadPath('${remote}', '${folderPath}')">${folder}</a>
-                        </div>`;
-                });
-                
-                data.files.forEach(file => {
-                    const filePath = path ? `${path}/${file.name}` : file.name;
-                    html += `
-                        <div class="item file">
-                            📄 ${file.name} (${formatSize(file.size)})
-                            <a class="download-link" href="/download/${remote}/${filePath}" target="_blank">⬇️ Download</a>
-                        </div>`;
-                });
-                html += "</div>";
-                content.innerHTML = html;
-            } catch (error) {
-                showMessage('Error loading path: ' + error.message, true);
-            }
+      }
+      async function uploadConfig(event) {
+        event.preventDefault();
+        const formData = new FormData();
+        const fileInput = event.target.querySelector('input[type="file"]');
+        formData.append('config_file', fileInput.files[0]);
+        try {
+          const response = await fetch('/api/config/upload', {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          if (response.ok) {
+            showMessage('Configuration updated successfully!', false);
+            setTimeout(() => window.location.reload(), 2000);
+          } else {
+            showMessage(result.detail || 'Failed to upload config', true);
+          }
+        } catch (error) {
+          showMessage('Error uploading config file', true);
         }
+      }
 
-        function formatSize(bytes) {
-            const sizes = ["B", "KB", "MB", "GB", "TB"];
-            if (bytes === 0) return "0 B";
-            const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-            return Math.round(bytes / Math.pow(1024, i), 2) + " " + sizes[i];
-        }
-
-        // Check if config exists and show appropriate UI
-        async function checkConfigExists() {
-            try {
-                const response = await fetch('/api/config/check');
-                const data = await response.json();
-                
-                if (data.exists) {
-                    document.getElementById('uploadSection').style.display = 'none';
-                    document.getElementById('mainContent').style.display = 'block';
-                    document.getElementById('settingsBtn').style.display = 'block';
-                    loadRemotes();  // Load remotes when config exists
-                } else {
-                    document.getElementById('uploadSection').style.display = 'block';
-                    document.getElementById('mainContent').style.display = 'none';
-                    document.getElementById('settingsBtn').style.display = 'none';
-                }
-            } catch (error) {
-                showMessage('Error checking configuration', true);
-            }
-        }
-
-        async function uploadConfig(event) {
-            event.preventDefault();
-            const formData = new FormData();
-            const fileInput = event.target.querySelector('input[type="file"]');
-            formData.append('config_file', fileInput.files[0]);
-
-            try {
-                const response = await fetch('/api/config/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-                if (response.ok) {
-                    showMessage('Configuration updated successfully!', false);
-                    setTimeout(() => window.location.reload(), 2000);
-                } else {
-                    showMessage(result.detail || 'Failed to upload config', true);
-                }
-            } catch (error) {
-                showMessage('Error uploading config file', true);
-            }
-        }
-
-        function showMessage(message, isError) {
-            const messageDiv = document.getElementById('configMessage');
-            const updateMessageDiv = document.getElementById('updateConfigMessage');
-            messageDiv.textContent = message;
-            updateMessageDiv.textContent = message;
-            messageDiv.className = isError ? 'error-message' : 'success-message';
-            updateMessageDiv.className = isError ? 'error-message' : 'success-message';
-            setTimeout(() => {
-                messageDiv.textContent = '';
-                updateMessageDiv.textContent = '';
-                messageDiv.className = '';
-                updateMessageDiv.className = '';
-            }, 5000);
-        }
-
-        // Initialize
-        document.getElementById('settingsBtn').addEventListener('click', showSettingsModal);
-        checkConfigExists();
+      function showMessage(message, isError) {
+        const messageDiv = document.getElementById('configMessage');
+        const updateMessageDiv = document.getElementById('updateConfigMessage');
+        messageDiv.textContent = message;
+        updateMessageDiv.textContent = message;
+        messageDiv.className = isError ? 'error-message' : 'success-message';
+        updateMessageDiv.className = isError ? 'error-message' : 'success-message';
+        setTimeout(() => {
+          messageDiv.textContent = '';
+          updateMessageDiv.textContent = '';
+          messageDiv.className = '';
+          updateMessageDiv.className = '';
+        }, 5000);
+      }
+      // Initialize
+      document.getElementById('settingsBtn').addEventListener('click', showSettingsModal);
+      checkConfigExists();
     </script>
-</body>
+  </body>
 </html>
 """
 
