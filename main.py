@@ -313,17 +313,27 @@ async function loadPath(remote, path = "") {
 	});
 	// File icons mapping
 	const fileIcons = {
-	    'pdf': '📄', // PDF icon
+	    'pdf': '📄',
 	    'doc': '📝', // Document icon
+     	    'docx': '📝', // Document icon
 	    'xls': '📊', // Spreadsheet icon
+     	    'xlsx': '📊', // Spreadsheet icon
 	    'jpg': '🖼️', // Image icon
 	    'png': '🖼️', // Image icon
 	    'zip': '🗜️', // Zip file icon
+     	    'rar': '🗜️', 
+	    'tar': '🗜️', 
 	    'mp3': '🎵', // Audio icon for MP3
 	    'm4u': '🎵', // Audio icon for M4U
+     	    'flac': '🎵',
 	    'mp4': '🎥', // Video icon for MP4
 	    'avi': '🎥', // Video icon for AVI
-	    'mov': '🎥', // Video icon for MOV
+	    'mov': '🎥', 
+     	    'mkv': '🎥', 
+	    'html': '🌐',
+     	    'exe': '💻',
+	    'apk': '📱',
+     	    'txt': '📜',
 	    // Add more extensions as needed
 	};
 	// Files with icons based on extension
