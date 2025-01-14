@@ -57,6 +57,8 @@ HTML_TEMPLATE = """
             --header-bg: #f8f9fa;
             --modal-bg: #ffffff;
             --modal-shadow: rgba(0, 0, 0, 0.1);
+            --folder-color: #e67e22;
+            --file-color: #16a085;
         }
 
         [data-theme="dark"] {
@@ -69,6 +71,8 @@ HTML_TEMPLATE = """
             --header-bg: #2d2d2d;
             --modal-bg: #2d2d2d;
             --modal-shadow: rgba(255, 255, 255, 0.1);
+            --folder-color: #f39c12;
+            --file-color: #1abc9c;
         }
 
         body {
@@ -142,16 +146,29 @@ HTML_TEMPLATE = """
             padding: 10px;
             border-bottom: 1px solid var(--border-color);
             transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .item:hover {
             background-color: var(--item-hover);
         }
 
-        .folder { color: var(--text-color); }
-        .file { color: var(--text-color); }
-        .download-link { color: var(--button-bg); text-decoration: none; }
-        
+        .folder {
+            color: var(--folder-color);
+            font-weight: bold;
+        }
+
+        .file {
+            color: var(--file-color);
+        }
+
+        .download-link {
+            color: var(--button-bg);
+            text-decoration: none;
+        }
+
         .breadcrumb {
             margin-bottom: 20px;
             color: var(--text-color);
@@ -174,8 +191,15 @@ HTML_TEMPLATE = """
             border-radius: 4px;
         }
 
-        .error-message { background: #ff595e; color: white; }
-        .success-message { background: #8ac926; color: white; }
+        .error-message {
+            background: #ff595e;
+            color: white;
+        }
+
+        .success-message {
+            background: #8ac926;
+            color: white;
+        }
     </style>
 </head>
 <body>
