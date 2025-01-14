@@ -61,7 +61,7 @@ HTML_TEMPLATE = """
 
         [data-theme="dark"] {
             --bg-color: #1a1a1a;
-            --text-color: #ffffff;
+            --text-color: #e0e0e0;
             --item-hover: #2d2d2d;
             --border-color: #333;
             --button-bg: #2980b9;
